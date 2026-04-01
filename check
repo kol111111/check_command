@@ -4,33 +4,42 @@ import os
 
 def check():
     if len(sys.argv) < 2:
-        print("\033[33mUsage: check [file_name]\033[0m")
+        print("\033[33mUsage: check [name]\033[0m")
         return
 
     target_name = sys.argv[1]
     target_lower = target_name.lower()
-    found_files = []
+    found_items = []
 
-    print(f"Searching for '{target_name}' (case-insensitive)")
-    print("This can take a while. Press Ctrl+C to cancel.")
+    is_looking_for_file = "." in target_name
+
+    print(f"Searching for '{target_name}'...")
+    print("Press Ctrl+C to cancel.")
 
     try:
         for root, dirs, files in os.walk("/"):
-            if any(sys_dir in root for sys_dir in ["/proc", "/sys", "/dev", "/run", "/var/lib/flatpak"]):
+            if any(sys_dir in root for sys_dir in ["/proc", "/sys", "/dev", "/run", "/var/lib/flatpak", ".cache"]):
                 continue
 
-            for f in files:
-                if f.lower() == target_lower:
-                    full_path = os.path.join(root, f)
-                    found_files.append(full_path)
-                    print(f"\033[32mFound: {full_path}\033[0m")
+            if is_looking_for_file:
+                for f in files:
+                    if f.lower() == target_lower:
+                        full_path = os.path.join(root, f)
+                        found_items.append(full_path)
+                        print(f"\033[32mFile found: {full_path}\033[0m")
+            else:
+                for d in dirs:
+                    if d.lower() == target_lower:
+                        full_path = os.path.join(root, d)
+                        found_items.append(full_path)
+                        print(f"\033[34mFolder found: {full_path}\033[0m")
 
     except KeyboardInterrupt:
         print("\n\033[33mScan was canceled by user.\033[0m")
     except PermissionError:
         pass
 
-    print(f"\n--- Matches found: {len(found_files)} ---")
+    print(f"\n--- Total matches found: {len(found_items)} ---")
 
 if __name__ == "__main__":
     check()
